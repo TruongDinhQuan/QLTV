@@ -1,0 +1,141 @@
+﻿@page "/ngaymuon"
+@page "/ngaymuon/{Id:int}"
+
+@attribute [Authorize(Roles = "Member")]
+@inject NavigationManager navigationManager
+@inject IUserService UserService
+@inject IJSRuntime JSRuntime
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+
+<br />
+
+<AuthorizeView Roles="Member" Context="authContext">
+    <Authorized>
+        <div class="container">
+            @if (currentBook != null)
+            {
+                <div class="row">
+                    <div class="col-md-4">
+                        <img src="@GetImageSource(currentBook.HinhAnh)" alt="Book Image" style="max-width: 100%; height: auto;" />
+                    </div>
+                    <div class="col-md-8">
+                        <h2>@currentBook.TenSach</h2>
+                        <div><strong>Tác giả:</strong> @currentBook.TacGia</div>
+                        <div><strong>Nhà xuất bản:</strong> @currentBook.NXB</div>
+                        <div><strong>Ngày xuất bản:</strong> @currentBook.NgayXuatBan.ToString("dd/MM/yyyy")</div>
+                        <div><strong>Thể loại:</strong> @currentBook.LoaiID</div>
+                        <div><strong>Mô tả:</strong> @currentBook.MoTa</div>
+                        <br />
+                    </div>
+                </div>
+                <br />
+            }
+        </div>
+        <br />
+        <div class="addbook_form">
+            <div class="addbook_form_body">
+                <EditForm Model="@currentbook">
+                    <div class="form-outline mb-4">
+                        <h3>Chọn ngày bạn muốn trả sách</h3>
+
+                        <InputDate @bind-Value="currentbook.NgayTra" @bind-Value:format="dd/MM/yyyy" class="form-control" /> 
+                    </div>
+                    @if (!string.IsNullOrEmpty(dueDateErrorMessage))
+                    {
+                        <MudAlert Severity="Severity.Error" Variant="Variant.Filled">@dueDateErrorMessage</MudAlert>
+                    }
+                    @if (!string.IsNullOrEmpty(borrowedErrorMessage))
+                    {
+                        <MudAlert Severity="Severity.Error" Variant="Variant.Filled">@borrowedErrorMessage</MudAlert>
+                    }
+                    <div>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="HandleSubmit" style="margin-right: 1rem;">Xác nhận</MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="GoBack">Hủy</MudButton>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    private SACH currentBook;
+    private string dueDateErrorMessage;
+    private string borrowedErrorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        currentBook = await UserService.GetBookByIdAsync(Id);
+    }
+
+    private string GetImageSource(string image)
+    {
+        if (string.IsNullOrEmpty(image))
+        {
+            return "path/to/default/image.jpg";  // Fallback image if none is provided
+        }
+
+        // Check if the string is Base64 by looking for common Base64 padding characters
+        bool isBase64 = (image.Length % 4 == 0) &&
+                        System.Text.RegularExpressions.Regex.IsMatch(image, @"^[a-zA-Z0-9\+/]*={0,2}$");
+
+        if (isBase64)
+        {
+            return $"data:image/jpeg;base64,{image}";
+        }
+        else
+        {
+            return image;  // Assume it's a URL
+        }
+    }
+
+    [Parameter]
+    public int Id { get; set; }
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+    public MUONTRASACH currentbook { get; set; } = new MUONTRASACH { NgayTra = DateTime.Today };
+
+    async Task HandleSubmit()
+    {
+        var authenticationState = await authenticationStateTask;
+        var userName = authenticationState.User.Identity.Name;
+
+        // Reset error messages
+        dueDateErrorMessage = string.Empty;
+        borrowedErrorMessage = string.Empty;
+
+        // Check if the due date is in the future
+        if (currentbook.NgayTra <= DateTime.Today)
+        {
+            dueDateErrorMessage = "Ngày mượn phải là ngày của tương lai.";
+        }
+
+        // Check if the user has already borrowed this book
+        if (await UserHasBorrowedBook(userName, Id))
+        {
+            borrowedErrorMessage = "Bạn đã mượn sách này rồi.";
+        }
+
+        // If there are any errors, return early
+        if (!string.IsNullOrEmpty(dueDateErrorMessage) || !string.IsNullOrEmpty(borrowedErrorMessage))
+        {
+            return;
+        }
+
+        // Add the book borrowing record
+        await UserService.AddBookLoanAsync(currentbook, userName, Id);
+        navigationManager.NavigateTo("/quanlymuonsach");
+    }
+
+    async Task<bool> UserHasBorrowedBook(string username, int bookId)
+    {
+        var borrowingRecords = await UserService.GetLoanBookListAsync(username);
+        return borrowingRecords.Any(br => br.IdS == bookId);
+    }
+
+    void GoBack()
+    {
+        navigationManager.NavigateTo("/muonsach");
+    }
+}
+

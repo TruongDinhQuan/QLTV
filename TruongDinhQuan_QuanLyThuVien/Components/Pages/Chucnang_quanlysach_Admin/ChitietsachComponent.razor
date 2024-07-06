@@ -1,0 +1,85 @@
+﻿@page "/bookdetails/{Id:int}"
+
+@inject IUserService UserService
+@inject NavigationManager navigationManager
+@rendermode InteractiveServer
+
+<MudContainer>
+    <MudPaper>
+        <MudGrid>
+            <MudItem xs="10">
+                <h1>Chi tiết Sách</h1>
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudDivider />
+            </MudItem>
+
+            <MudItem xs="12">
+                @if (currentBook != null)
+                {
+                    <MudGrid>
+                        <MudItem xs="12" md="4">
+                            <MudImage Src="@GetImageSource(currentBook.HinhAnh)" Alt="Book Image" Style="width: 100%; height: auto;" />
+                        </MudItem>
+                        <MudItem xs="12" md="8">
+                            <MudText Typo="Typo.h3">@currentBook.TenSach</MudText>
+                            <MudText><strong>Tác giả:</strong> @currentBook.TacGia</MudText>
+                            <MudText><strong>Nhà xuất bản:</strong> @currentBook.NXB</MudText>
+                            <MudText><strong>Ngày xuất bản:</strong> @currentBook.NgayXuatBan.ToString("dd/MM/yyyy")</MudText>
+                            <MudText><strong>Thể loại:</strong> @currentBook.LoaiID</MudText>
+                            <MudText><strong>Mô tả:</strong> @currentBook.MoTa</MudText>
+                            <MudDivider Class="my-2" />
+                            <div class="button-container">
+                                <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="GoBack">Quay lại</MudButton>
+                            </div>
+                        </MudItem>
+                    </MudGrid>
+                }
+                else
+                {
+                    <MudText>Sách không tồn tại hoặc không tải được.</MudText>
+                }
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private SACH currentBook;
+
+    protected override async Task OnInitializedAsync()
+    {
+        currentBook = await UserService.GetBookByIdAsync(Id);
+    }
+
+    private string GetImageSource(string image)
+    {
+        if (string.IsNullOrEmpty(image))
+        {
+            return "path/to/default/image.jpg";  // Fallback image if none is provided
+        }
+
+        // Check if the string is Base64 by looking for common Base64 padding characters
+        bool isBase64 = (image.Length % 4 == 0) &&
+                        System.Text.RegularExpressions.Regex.IsMatch(image, @"^[a-zA-Z0-9\+/]*={0,2}$");
+
+        if (isBase64)
+        {
+            return $"data:image/jpeg;base64,{image}";
+        }
+        else
+        {
+            return image;  // Assume it's a URL
+        }
+    }
+
+    void GoBack()
+    {
+        navigationManager.NavigateTo("/quanlybook");
+    }
+}
+

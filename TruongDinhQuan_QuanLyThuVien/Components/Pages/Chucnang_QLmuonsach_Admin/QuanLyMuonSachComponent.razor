@@ -1,0 +1,199 @@
+﻿@page "/quanlymuonsach"
+
+@inject IJSRuntime JSRuntime
+@inject NavigationManager navigationManager
+@rendermode InteractiveServer
+@inject IUserService UserService
+
+@attribute [Authorize(Roles = "Admin,Member")]
+
+<AuthorizeView Roles="Admin">
+    <Authorized>
+        <h1>Yêu Cầu Mượn Sách</h1>
+        <br />
+        <div>
+            @if (!isProcessing)
+            {
+                <div class="mainmenu">
+
+                    @* Seach book *@
+                    <div class="form-group">
+                        <input class="form-control" type="text" placeholder="Nhập ID hoặc tên người dùng"
+                               @bind="Filter"
+                               @bind:event="oninput">
+                    </div>
+                    @* read data from database and show them to table *@
+                    <div>
+                        <table class="table table-bordered">
+                            <thead>
+                                @* header *@
+                                <tr>
+                                    <th>UserID</th>
+                                    <th>Người dùng</th>
+                                    <th>Sách ID</th>
+                                    <th>Tên sách</th>
+                                    <th>Ngày mượn</th>
+                                    <th>Ngày trả</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @* body *@
+                                @foreach (var book in borrowingRecord)
+                                {
+                                    if (!IsVisible(book))
+                                        continue;
+                                    <tr>
+                                        <td>@book.IdND</td>
+                                        <td>@(book.NGUOIDUNG?.TenDangNhap ?? "Unknown")</td>
+                                        <td>@book.IdS</td>
+                                        <td>@(book.SACH?.TenSach ?? "Unknown")</td>
+                                        <td>@book.NgayMuon.ToString("dd/MM/yyyy")</td>
+                                        <td>@book.NgayTra.ToString("dd/MM/yyyy")</td>
+                                        <td>
+                                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => HandleSubmit(book.IdMuon))">Xác nhận</MudButton>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>@* read data from database and show them to table *@
+                </div> @* main menu *@
+            }
+
+        </div>
+    </Authorized>
+</AuthorizeView>
+
+<AuthorizeView Roles="Member">
+    <Authorized>
+        <h1>Mượn Sách</h1>
+        <br/>
+        <div>
+            <div class="mainmenu">
+
+                <div>
+                    <h4>Bạn còn có thể mượn @remainingQuota cuốn sách</h4>
+                </div>
+                <br/>
+                <div>
+                    <table class="table table-bordered">
+                        <thead>
+                            @* header *@
+                            <tr>
+                                <th>Sách ID</th>
+                                <th>Tên sách</th>
+                                <th>Ngày mượn</th>
+                                <th>Ngày trả</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @* body *@
+                            @foreach (var book in borrowingRecord)
+                            {
+                                if (!IsVisible(book))
+                                    continue;
+                                <tr>
+                                    <td>@book.IdS</td>
+                                    <td>@(book.SACH?.TenSach ?? "Unknown")</td>
+                                    <td>@book.NgayMuon.ToString("dd/MM/yyyy")</td>
+                                    <td>@book.NgayTra.ToString("dd/MM/yyyy")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>@* read data from database and show them to table *@
+            </div> @* main menu *@
+        </div>
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    bool isProcessing = false;
+
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    public string Filter { get; set; }
+
+    public bool IsVisible(MUONTRASACH borrowingRecords)
+    {
+        if (string.IsNullOrEmpty(Filter))
+            return true;
+
+        if (borrowingRecords.IdND.ToString().Contains(Filter, StringComparison.OrdinalIgnoreCase) ||
+            (borrowingRecords.NGUOIDUNG?.TenDangNhap ?? "").Contains(Filter, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    }
+
+    // get all book list
+    List<SACH> booklist = new List<SACH>();
+    List<SACH> booklistAvailable = new List<SACH>();
+    List<MUONTRASACH> borrowingRecord = new List<MUONTRASACH>();
+
+    public MUONTRASACH currentbook { get; set; } = new();
+    public DateTime currentDate { get; set; }
+    public int remainingQuota { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authenticationState = await authenticationStateTask;
+
+        //get Available List
+        booklistAvailable = await UserService.GetBookListAvailableAsync();
+
+        borrowingRecord = await UserService.GetLoanBookListAsync(authenticationState.User.Identity.Name);
+
+        //get book list
+        booklist = await UserService.GetBookListAsync(0);
+
+        // calculate remaining quota
+        remainingQuota = 5 - borrowingRecord.Count;
+    }
+
+    async Task<string> Booktitle(int? id)
+    {
+        var bookList = await UserService.GetBookListAsync(id);
+
+        var bookTitles = bookList.Select(bookInfo => bookInfo.TenSach);
+        string concatenatedTitles = string.Join(", ", bookTitles);
+        return concatenatedTitles;
+    }
+
+    protected override void OnInitialized()
+    {
+        currentDate = DateTime.Now;
+    }
+
+    async Task HandleSubmit(int id)
+    {
+        var authenticationState = await authenticationStateTask;
+
+        //add
+        await UserService.UpdateReturnedDateAsync(currentbook, id);
+        navigationManager.NavigateTo(navigationManager.Uri, forceLoad: true);
+    }
+
+    async Task trasach(int id)
+    {
+        var authenticationState = await authenticationStateTask;
+
+        // Set isProcessing to true
+        isProcessing = true;
+
+        // Update return date
+        await UserService.UpdateReturnedDateAsync(currentbook, id);
+
+        // Navigate to the same page to refresh data
+        navigationManager.NavigateTo(navigationManager.Uri, forceLoad: true);
+    }
+
+
+}

@@ -1,0 +1,196 @@
+﻿@page "/muonsach"
+
+@inject NavigationManager navigationManager
+@inject IUserService UserService
+@attribute [Authorize(Roles = "Member")]
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+
+
+
+<AuthorizeView Roles="Member">
+    <Authorized>
+        <div class="mainpage">
+            <h1>Sách</h1>
+            <br />
+            <div class="row">
+                <div class="col-md-8">
+                    <input type="text" class="form-control" @bind="searchTerm" placeholder="Nhập từ khóa tìm kiếm">
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-primary" @onclick="Search">Tìm kiếm</button>
+                </div>
+            </div>
+            <br />
+            <!-- Rest of your existing code -->
+            @if (booklist == null || booklist.Count == 0)
+            {
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            }
+            else
+            {
+                <br />
+                @* read data from database and show them to table *@
+                <div class="row">
+                    @foreach (var book in booklist)
+                    {
+                        <div class="col-md-4">
+                            <MudCard Class="card-border">
+                                <MudCardMedia Image="@GetImageSource(book.HinhAnh)" Height="500" />
+                                <MudCardContent Class="card-content">
+                                    <div class="mb-2">
+                                        <h2>@book.TenSach</h2>
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Tác giả:</strong> <span>@book.TacGia</span>
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Thể loại:</strong> <span>@GetCategoryName(book.LoaiID)</span>
+                                    </div>
+                                </MudCardContent>
+                                <MudCardActions Class="card-actions">
+                                    <MudButton Variant="Variant.Filled" Color="Color.Primary" @onclick="@(() => HandleSubmit(book.IDS))" style="margin-right: 1rem;">Mượn</MudButton>
+                                    <MudButton Variant="Variant.Filled" Color="Color.Success" @onclick="@(() => ViewDetails(book.IDS))">Xem chi tiết</MudButton>
+                                </MudCardActions>
+                            </MudCard>
+                            <br />
+                        </div>
+                    }
+                </div>
+
+            }
+        </div>
+    </Authorized>
+</AuthorizeView>
+
+
+<style>
+    .row {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+
+    .col-md-4 {
+        flex: 0 0 calc(33.33% - 1rem); /* Đảm bảo 3 cột trên một hàng trên màn hình lớn */
+        max-width: calc(33.33% - 1rem); /* Đảm bảo 3 cột trên một hàng trên màn hình nhỏ */
+        margin-bottom: 1rem; /* Để tạo khoảng cách giữa các cột */
+    }
+
+    .card-border {
+        display: flex;
+        flex-direction: column;
+        height: 100%; /* Cài đặt chiều cao tối đa của thẻ */
+        border: 1px solid #ccc; /* Thêm đường viền cho thẻ */
+        border-radius: 8px; /* Bo góc thẻ */
+        background-color: lightblue; /* Màu nền cho thẻ */
+        color: black; /* Màu chữ */
+        overflow: hidden; /* Giữ cho nội dung không tràn ra ngoài */
+    }
+
+    .card-content {
+        flex-grow: 1; /* Mở rộng không gian của phần nội dung */
+        padding: 1rem; /* Thêm padding cho phần nội dung */
+    }
+
+    .card-actions {
+        margin-top: auto; /* Đảm bảo nằm ở cuối card */
+        padding: 1rem; /* Thêm padding cho phần nội dung */
+    }
+</style>
+
+
+
+
+@code {
+    // get all book list
+    List<SACH>? booklist = new List<SACH>();
+    List<LOAI> Categorylist = new List<LOAI>(); // Add this line to store category list
+    protected override async Task OnInitializedAsync()
+    {
+        //getbook list
+        booklist = await UserService.GetBookListAsync(0);
+
+        // Get category list
+        Categorylist = await UserService.GetCategoryListAsync();
+    }
+
+    async Task HandleSubmit(int id)
+    {
+        //var authenticationState = await authenticationStateTask;
+        //Navigate to ChoseDateLoan
+        navigationManager.NavigateTo($"/ngaymuon/{id}");
+
+    }
+
+    //xem chi tiết
+    void ViewDetails(int id)
+    {
+        navigationManager.NavigateTo($"/chitietsach/{id}");
+    }
+
+    private string GetImageSource(string image)
+    {
+        if (string.IsNullOrEmpty(image))
+        {
+            return "path/to/default/image.jpg";  // Fallback image if none is provided
+        }
+
+        // Check if the string is Base64 by looking for common Base64 padding characters
+        bool isBase64 = (image.Length % 4 == 0) &&
+                        System.Text.RegularExpressions.Regex.IsMatch(image, @"^[a-zA-Z0-9\+/]*={0,2}$");
+
+        if (isBase64)
+        {
+            return $"data:image/jpeg;base64,{image}";
+        }
+        else
+        {
+            return image;  // Assume it's a URL
+        }
+    }
+
+    string searchTerm = "";
+
+    async Task Search()
+    {
+        await FilterBooks();
+    }
+
+    async Task FilterBooks()
+    {
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            booklist = booklist.Where(book =>
+                book.TenSach.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                book.TacGia.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                book.NXB.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                GetCategoryName(book.LoaiID).Contains(searchTerm, StringComparison.OrdinalIgnoreCase) || // Change here
+                book.MoTa.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
+            ).ToList();
+
+            if (booklist.Count == 0)
+            {
+                await LoadBookList();
+            }
+        }
+        else
+        {
+            await LoadBookList();
+        }
+    }
+
+    async Task LoadBookList()
+    {
+        booklist = await UserService.GetBookListAsync(0);
+    }
+
+    string GetCategoryName(int? categoryId)
+    {
+        var category = Categorylist.FirstOrDefault(c => c.LoaiID == categoryId);
+        return category != null ? category.TenLoai : "Unknown"; // Return category name or default string if not found
+    }
+}
+

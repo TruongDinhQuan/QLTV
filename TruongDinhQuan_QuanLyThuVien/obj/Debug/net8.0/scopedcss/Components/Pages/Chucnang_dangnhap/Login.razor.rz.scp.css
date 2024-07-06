@@ -1,0 +1,57 @@
+
+.nono[b-1cjy9neq4o] {
+    background-image: url("/Image/NTR.jpg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    height: 100vh;
+    width: 100vw;
+    margin: 0;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+
+/*    background-image: url("/Image/anhnen.jpg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    height: 100vh;
+    width: 100vw;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;*/
+}
+
+.mainlayout[b-1cjy9neq4o] {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #24cdd6; /* Tạo hiệu ứng nền mờ cho form */
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Tạo hiệu ứng đổ bóng */
+}
+
+.login_box[b-1cjy9neq4o] {
+    background-color: #2bbfc6;
+    padding: 2rem;
+    border-radius: 8px;
+}
+
+.form-outline[b-1cjy9neq4o] {
+    margin-bottom: 1rem;
+}
+
+.btn-primary[b-1cjy9neq4o] {
+    width: 100%;
+}
+
+.blue-card[b-1cjy9neq4o] {
+    background-color: #3ba0a5;
+    color: white; /* Để chữ bên trong card có màu trắng */
+}

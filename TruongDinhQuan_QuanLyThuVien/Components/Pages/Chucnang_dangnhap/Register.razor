@@ -1,0 +1,86 @@
+﻿@page "/Register"
+
+@inject IUserService UserService
+@inject NavigationManager navigationManager
+@rendermode InteractiveServer
+
+<div class="lon">
+    <div class="login_box">
+        <div class="add_form">
+            <div class="Title_page">Đăng ký</div>
+            <br />
+            <div class="addbook_form_body">
+                <EditForm OnSubmit="HandleSubmit" Model="@currentuser">
+                    <div class="form-outline mb-4">
+                        <label>Tên Đăng Nhập</label>
+                        <InputText @bind-Value="currentuser.TenDangNhap" type="text" class="form-control" />
+
+                        <label>Mật Khẩu</label>
+                        <InputText @bind-Value="currentuser.MatKhau" type="text" class="form-control" />
+
+                        <label>Tên Đầy Đủ</label>
+                        <InputText @bind-Value="currentuser.TenDaydu" type="text" class="form-control" />
+
+                        <label>Email</label>
+                        <InputText @bind-Value="currentuser.Email" @bind-Value:format="dd/MM/yyyy" class="form-control" />
+
+                    </div>
+                    <div>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="HandleSubmit">Hoàn thành</MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="GoBack">Hủy</MudButton>
+
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+
+    </div>
+
+
+</div>
+
+@code {
+
+    [SupplyParameterFromForm]
+    public NGUOIDUNG currentuser { get; set; } = new();
+
+
+    //add function
+    async Task HandleSubmit()
+    {
+        //add
+        currentuser.VaiTro = "Member";
+        await UserService.AddNewUserAsync(currentuser);
+        navigationManager.NavigateTo("/");
+
+    }
+
+    void GoBack()
+    {
+        navigationManager.NavigateTo("/");
+    }
+}
+<style>
+    .lon {
+        background-image: url("/Image/anhdep.jpg");
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center;
+        height: 100vh;
+        width: 100vw;
+        margin: 0;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+
+    .login_box {
+        background-color: #2bbfc6;
+        padding: 2rem;
+        border-radius: 8px;
+    }
+</style>

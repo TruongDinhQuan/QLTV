@@ -1,0 +1,199 @@
+﻿@page "/trasach"
+
+@inject IJSRuntime JSRuntime
+@inject NavigationManager navigationManager
+@rendermode InteractiveServer
+@inject IUserService UserService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+@attribute [Authorize(Roles = "Admin,Member")]
+
+<PageTitle>Dashboard</PageTitle>
+
+<AuthorizeView Roles="Admin">
+    <Authorized>
+        <h1>Yêu Cầu Trả Sách</h1>
+        <br />
+
+        <div>
+            @* main menu *@
+            <div class="mainmenu">
+
+                @* Seach book *@
+                <div class="form-group">
+                    <input class="form-control" type="text" placeholder="Nhập ID hoặc tên người dùng"
+                           @bind="Filter"
+                           @bind:event="oninput">
+                </div>
+                @* read data from database and show them to table *@
+                <div>
+                    <table class="table table-bordered">
+                        <thead>
+                            @* header *@
+                            <tr>
+                                <th>UserID</th>
+                                <th>Người dùng</th>
+                                <th>Sách ID</th>
+                                <th>Tên sách</th>
+                                <th>Ngày mượn</th>
+                                <th>Ngày trả</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @* body *@
+                            @foreach (var book in borrowingRecord)
+                            {
+                                if (!IsVisible(book))
+                                    continue;
+                                <tr>
+                                    <td>@book.IdND</td>
+                                    <td>@(book.NGUOIDUNG?.TenDangNhap ?? "Unknown")</td>
+                                    <td>@book.IdS</td>
+                                    <td>@(book.SACH?.TenSach ?? "Unknown")</td>
+                                    <td>@book.NgayMuon.ToString("dd/MM/yyyy")</td>
+                                    <td>@book.NgayTra.ToString("dd/MM/yyyy")</td>
+                                    <td>
+                                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => ConfirmReturn(book.IdMuon))">Xác nhận</MudButton>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>@* read data from database and show them to table *@
+            </div> @* main menu *@
+        </div>
+    </Authorized>
+</AuthorizeView>
+
+<AuthorizeView Roles="Member">
+    <Authorized>
+        <h1>Trả Sách</h1>
+        <br />
+        <div>
+            @* main menu *@
+            <div class="mainmenu">
+
+                @* read data from database and show them to table *@
+                <div>
+                    <table class="table table-bordered">
+                        <thead>
+                            @* header *@
+                            <tr>
+                                <th>Sách ID</th>
+                                <th>Tên sách</th>
+                                <th>Ngày mượn</th>
+                                <th>Ngày trả</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @* body *@
+                            @foreach (var book in borrowingRecord)
+                            {
+                                if (!IsVisible(book))
+                                    continue;
+                                <tr>
+                                    <td>@book.IdS</td>
+                                    <td>@(book.SACH?.TenSach ?? "Unknown")</td>
+                                    <td>@book.NgayMuon.ToString("dd/MM/yyyy")</td>
+                                    <td>@book.NgayTra.ToString("dd/MM/yyyy") </td>
+                                    <td>
+                                        <button class="btn btn-primary" @onclick="@(() => RequestReturn(book.IdMuon))">Trả Sách</button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>@* read data from database and show them to table *@
+            </div> @* main menu *@
+        </div>
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    //bool showAdminSection = false;
+
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    public string Filter { get; set; }
+
+    public bool IsVisible(MUONTRASACH borrowingRecords)
+    {
+        if (string.IsNullOrEmpty(Filter))
+            return true;
+
+        if (borrowingRecords.IdND.ToString().Contains(Filter, StringComparison.OrdinalIgnoreCase) ||
+            (borrowingRecords.NGUOIDUNG?.TenDangNhap ?? "").Contains(Filter, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    }
+
+    // get all book list
+    List<SACH> booklist = new List<SACH>();
+    List<SACH> booklistAvailable = new List<SACH>();
+    List<MUONTRASACH> borrowingRecord = new List<MUONTRASACH>();
+
+    public MUONTRASACH currentbook { get; set; } = new();
+    public DateTime currentDate { get; set; }
+    private string UserDisplayName { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            UserDisplayName = user.Identity.Name; // Lấy tên người dùng đã đăng nhập
+
+            if (user.IsInRole("Admin"))
+            {
+                // Lấy tất cả yêu cầu trả sách nếu là Admin
+                borrowingRecord = await UserService.GetAllLoanRequestsAsync();
+            }
+            else
+            {
+                // Lấy IdND của người dùng hiện tại từ UserDisplayName
+                int? userId = await UserService.GetUserIdByNameAsync(UserDisplayName);
+
+                if (userId.HasValue)
+                {
+                    // Gọi phương thức để lấy danh sách mượn sách của người dùng hiện tại bằng IdND
+                    borrowingRecord = await UserService.GetLoanBookListttAsync(userId.Value);
+                }
+            }
+        }
+    }
+
+
+    async Task RequestReturn(int id)
+    {
+        // Update request status
+        await UserService.RequestReturnAsync(id);
+
+        // Remove the book from the borrowingRecord list
+        var bookToRemove = borrowingRecord.FirstOrDefault(book => book.IdMuon == id);
+        if (bookToRemove != null)
+        {
+            borrowingRecord.Remove(bookToRemove);
+        }
+    }
+
+
+    async Task ConfirmReturn(int id)
+    {
+        // Confirm return status
+        await UserService.ConfirmReturnAsync(id);
+
+        // Force reload the page
+        navigationManager.NavigateTo(navigationManager.Uri, forceLoad: true);
+    }
+}

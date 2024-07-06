@@ -1,0 +1,77 @@
+﻿@page "/"
+
+@inject QLTVDbcontext QLTVdbcontext
+@inject NavigationManager navigationManager
+
+<PageTitle>Login</PageTitle>
+
+<div class="nono">
+
+        <div class="login_box">
+            <div class="card blue-card" style="width: 28rem; height: 50 rem;">
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="pills-login" role="tabpanel" aria-labelledby="tab-login">
+                        <EditForm Model="@user" OnValidSubmit="Authenticate" FormName="Login_form">
+                            <DataAnnotationsValidator />
+                            <div class="form-outline mb-4">
+                                <label>Tên đăng nhập</label>
+                                <InputText @bind-Value="user.TenDangNhap" type="text" class="form-control" />
+                                <ValidationMessage For="() => user.TenDangNhap" />
+                            </div>
+                            <div class="form-outline mb-4">
+                                <label>Mật khẩu</label>
+                                <InputText @bind-Value="user.MatKhau" type="password" class="form-control" />
+                                <ValidationMessage For="() => user.MatKhau" />
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block mb-4" style="background-color: #35abd6; color: white;">Đăng nhập</button>
+                            <div class="text-center">
+                                <p>Chưa có tài khoản? <a href="/Register" style="color: #0ef4f0;">Đăng Ký</a></p>
+                            </div>
+                            <div>
+                                <span>@error</span>
+                            </div>
+                        </EditForm>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+</div>
+
+
+@code {
+    [CascadingParameter]
+    public HttpContext? HttpContext { get; set; }
+
+    [SupplyParameterFromForm]
+    public NGUOIDUNG user { get; set; } = new();
+
+    private string? error;
+
+    private async Task Authenticate()
+    {
+        var user_account = QLTVdbcontext.NGUOIDUNG.FirstOrDefault(x => x.TenDangNhap == user.TenDangNhap);
+
+        if (user_account == null || user_account.MatKhau != user.MatKhau)
+        {
+            error = "Sai tài khoản hoặc mật khẩu";
+            return;
+        }
+
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.Name, user.TenDangNhap),
+            new Claim(ClaimTypes.Role, user_account.VaiTro)
+        };
+
+        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        var principal = new ClaimsPrincipal(identity);
+
+        await HttpContext!.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+
+        navigationManager.NavigateTo("/home");
+    }
+}
+
+
+

@@ -1,0 +1,107 @@
+﻿@page "/home"
+
+@inject NavigationManager Navigation
+@inject IUserService UserService
+@inject QLTVDbcontext DbContext
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<br />
+<div style="text-align: center;">
+    <h1>Chào mừng <span style="color: blue;">@UserDisplayName</span> trở lại</h1>
+    <br />
+    <img src="Image/cute.jpg" alt="Welcome Image" style="max-width: 100%; height: auto;" />
+</div>
+<br />
+
+<style>
+    .center-text {
+        text-align: center;
+    }
+</style>
+
+<AuthorizeView Roles="Admin" Context="authContext">
+    <Authorized>
+        <h3 class="center-text">Biểu đồ tròn về số lần mượn sách của người dùng</h3>
+        <MudPaper Class="pa-4">
+            <MudChart ChartType="ChartType.Pie" InputData="@chartData.Values.Select(v => (double)v).ToArray()" @bind-SelectedIndex="Index" InputLabels="@chartData.Keys.ToArray()" Width="300px" Height="300px" />
+        </MudPaper>
+        <MudTable Items="@chartData">
+            <HeaderContent>
+                <MudTh>Tên người dùng</MudTh>
+                <MudTh>Số lần mượn</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Tên người dùng">@context.Key</MudTd>
+                <MudTd DataLabel="Số lần mượn">@context.Value</MudTd>
+            </RowTemplate>
+        </MudTable>
+    </Authorized>
+</AuthorizeView>
+
+<AuthorizeView Roles="Member" Context="authContext">
+    <Authorized>
+        <h2>Hồ sơ của bạn</h2>
+        <EditForm OnSubmit="HandleSubmit" Model="@currentuser">
+            <div class="form-outline mb-4">
+                <label>Tên đăng nhập</label>
+                <InputText @bind-Value="currentuser.TenDangNhap" class="form-control" />
+                <label>Mật khẩu</label>
+                <InputText @bind-Value="currentuser.MatKhau" class="form-control" />
+                <label>Tên đầy đủ</label>
+                <InputText @bind-Value="currentuser.TenDaydu" class="form-control" />
+                <label>Email</label>
+                <InputText @bind-Value="currentuser.Email" class="form-control" />
+            </div>
+            <div>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="HandleSubmit">Cập nhật</MudButton>
+            </div>
+        </EditForm>
+        <br />
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    private int Index = -1;
+    private string UserDisplayName { get; set; }
+
+    public NGUOIDUNG currentuser { get; set; } = new();
+
+    private Dictionary<string, int> chartData = new Dictionary<string, int>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            UserDisplayName = user.Identity.Name;
+            currentuser = await UserService.GetUserByUserNameAsync(UserDisplayName);
+
+            if (currentuser != null)
+            {
+                chartData = await UserService.GetLoanStatisticsAsync();  // Ensure this method returns Dictionary<string, int> with user names as keys and loan counts as values.
+            }
+        }
+    }
+
+    async Task HandleSubmit()
+    {
+        // Ensure the currentuser object is updated with the correct values
+        bool updateSuccess = await UserService.UpdateUserByUserNameAsync(currentuser, UserDisplayName);
+        if (updateSuccess)
+        {
+            StateHasChanged(); // Refresh the UI
+            Navigation.NavigateTo("/home", forceLoad: true); // Redirect or refresh the page
+        }
+        else
+        {
+            Console.WriteLine("Update failed");
+        }
+    }
+
+    void GoBack()
+    {
+        Navigation.NavigateTo(Navigation.Uri, forceLoad: true);
+    }
+}

@@ -1,0 +1,141 @@
+﻿@page "/BookC&U"
+@page "/BookC&U/{Id:int}"
+
+@inject NavigationManager navigationManager
+@inject IUserService UserService
+@rendermode InteractiveServer
+
+<style>
+    .center-text {
+        text-align: center;
+    }
+</style>
+
+@if (Id is null)
+{
+    <PageTitle>Sách Mới</PageTitle>
+    //add new book form
+    <h1 class="center-text">Form thêm sách</h1>
+}
+else
+{
+    <PageTitle>Chỉnh Sửa Sách</PageTitle>
+    <h1 class="center-text">Form chỉnh sửa sách</h1>
+}
+
+
+<AuthorizeView Roles="Admin" Context="authContext">
+    <Authorized>
+        <div class="addbook_form">
+            <div class="addbook_form_body">
+                <EditForm OnSubmit="HandleSubmit" Model="@currentbook">
+                    <div class="form-outline mb-4">
+                        <label>Tên Sách</label>
+                        <br/>
+                        <InputText @bind-Value="currentbook.TenSach" type="text" class="form-control" />
+
+                        <label>Tác giả</label>
+                        <InputText @bind-Value="currentbook.TacGia" type="text" class="form-control" />
+
+                        <label>Nhà xuất bản</label>
+                        <InputText @bind-Value="currentbook.NXB" type="text" class="form-control" />
+
+                        <label>Ngày xuất bản</label>
+                        <InputDate @bind-Value="currentbook.NgayXuatBan" @bind-Value:format="dd/MM/yyyy" class="form-control" />
+
+                        <label>Thể loại</label>
+                        <InputSelect @bind-Value="currentbook.LoaiID" class="form-select" aria-label="Default select example">
+                            <option selected>Open this select menu</option>
+                            @foreach (var category in Categorylist)
+                            {
+                                <option value="@category.LoaiID">@category.TenLoai</option>
+                            }
+                        </InputSelect>
+
+                        <div class="mb-3">
+                            <label for="exampleFormControlTextarea1" class="form-label">Mô tả</label>
+                            <br />
+                            <textarea @bind="currentbook.MoTa" class="form-control" id="exampleFormControlTextarea1" rows="3"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="uploadFile" class="form-label">Tải ảnh</label>
+                            <InputFile id="uploadFile" OnChange="HandleFileSelected" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Save" Color="Color.Info" Size="Size.Small" OnClick="HandleSubmit">Lưu</MudButton>
+                        <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Cancel" Color="Color.Secondary" Size="Size.Small" OnClick="GoBack">Hủy</MudButton>
+                    </div>
+                    <br/>
+                </EditForm>
+            </div>
+        </div>
+    </Authorized>
+</AuthorizeView>
+
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    public SACH currentbook { get; set; } = new SACH { NgayXuatBan = DateTime.Today };
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Id is not null)
+        {
+            var editbook = await UserService.GetBookByIdAsync((int)Id);
+            if (editbook is not null)
+                currentbook = editbook;
+        }
+    }
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        using (var memoryStream = new MemoryStream())
+        {
+            await file.OpenReadStream().CopyToAsync(memoryStream);
+            var buffer = memoryStream.ToArray();
+
+            // Convert the image to a Base64 string
+            currentbook.HinhAnh = Convert.ToBase64String(buffer);
+        }
+    }
+
+
+    // Get all categories
+    List<LOAI> Categorylist = new List<LOAI>();
+    protected override async Task OnInitializedAsync()
+    {
+        // Get category list
+        Categorylist = await UserService.GetCategoryListAsync();
+    }
+
+    // Add or update book function
+    async Task HandleSubmit()
+    {
+        if (Id is not null)
+        {
+            // Update existing book
+            await UserService.UpdateNewBookAsync(currentbook, (int)Id);
+        }
+        else
+        {
+            // Add new book
+            currentbook.CoSan = true;
+            await UserService.AddNewBookAsync(currentbook);
+        }
+
+        navigationManager.NavigateTo("/quanlybook");
+    }
+
+
+    // Navigate back function
+    void GoBack()
+    {
+        navigationManager.NavigateTo("/quanlybook");
+    }
+}
+

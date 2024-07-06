@@ -1,0 +1,139 @@
+﻿@page "/quanlynguoidung"
+
+@rendermode @(new InteractiveServerRenderMode(prerender: false)) 
+@inject IUserService UserService
+@inject NavigationManager navigationManager
+
+
+<h1>Quản Lý Người Dùng</h1>
+<br />
+
+<AuthorizeView Roles="Admin">
+    <Authorized>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                    <input type="text" class="form-control mb-3" @bind="searchTerm" placeholder="Nhập tên người dùng cần tìm kiếm" />
+                </div>
+                <div class="col-md-4">
+                    <MudButton Variant="Variant.Filled" Color="Color.Tertiary" @onclick="Search">Tìm kiếm</MudButton>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    @if (userlist == null || userlist.Count == 0)
+                    {
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <MudFab Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" @onclick="CreateUser" />
+                        <br/>
+                        <br />
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Id</th>
+                                    <th>Tên Đăng Nhập</th>
+                                    <th>Tên Đầy Đủ</th>
+                                    <th>Email</th>
+                                    <th>Vai Trò</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var user in displayedUsers)
+                                {
+                                    <tr>
+                                        <td>@user.IdUser</td>
+                                        <td>@user.TenDangNhap</td>
+                                        <td>@user.TenDaydu</td>
+                                        <td>@user.Email</td>
+                                        <td>@user.VaiTro</td>
+                                        <td>
+                                            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Edit" Color="Color.Success" OnClick="@(() => EditUser(user.IdUser))">Sửa</MudButton>
+                                            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => DeleteUser(user.IdUser))">Xóa</MudButton>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        @if (!string.IsNullOrEmpty(errorMessage))
+                        {
+                            <div class="alert alert-danger" role="alert">
+                                @errorMessage
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    private List<NGUOIDUNG> userlist;
+    private List<NGUOIDUNG> displayedUsers;
+    private string searchTerm = "";
+    private string errorMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsers();
+    }
+
+    private async Task LoadUsers()
+    {
+        userlist = await UserService.GetUserListAsync(); // Load danh sách người dùng từ service
+        displayedUsers = userlist.ToList(); // Sao chép danh sách để hiển thị ban đầu
+    }
+
+    void Search()
+    {
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            // Lọc danh sách người dùng dựa trên từ khóa tìm kiếm
+            displayedUsers = userlist.Where(u =>
+                u.TenDangNhap.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                u.TenDaydu.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                u.Email.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                u.VaiTro.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
+            ).ToList();
+        }
+        else
+        {
+            // Nếu không có từ khóa tìm kiếm thì hiển thị lại danh sách nguyên ban đầu
+            displayedUsers = userlist.ToList();
+        }
+    }
+
+    void EditUser(int id)
+    {
+        navigationManager.NavigateTo($"/UserManagement_TT/{id}");
+    }
+
+    void CreateUser()
+    {
+        navigationManager.NavigateTo("/UserManagement_TT");
+    }
+
+    async Task DeleteUser(int id)
+    {
+        try
+        {
+            await UserService.DeleteNewUserAsync(id);
+            navigationManager.NavigateTo(navigationManager.Uri, forceLoad: true);
+        }
+        catch (InvalidOperationException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Đã xảy ra lỗi khi xóa người dùng.";
+        }
+    }
+}

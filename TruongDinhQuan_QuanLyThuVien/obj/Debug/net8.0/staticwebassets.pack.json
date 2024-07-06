@@ -1,0 +1,73 @@
+{
+  "Files": [
+    {
+      "Id": "G:\\C#\\thaylong\\TruongDinhQuan_QuanLyThuVien\\TruongDinhQuan_QuanLyThuVien\\TruongDinhQuan_QuanLyThuVien\\obj\\Debug\\net8.0\\scopedcss\\projectbundle\\TruongDinhQuan_QuanLyThuVien.bundle.scp.css",
+      "PackagePath": "staticwebassets\\TruongDinhQuan_QuanLyThuVien.bundle.scp.css"
+    },
+    {
+      "Id": "G:\\C#\\thaylong\\TruongDinhQuan_QuanLyThuVien\\TruongDinhQuan_QuanLyThuVien\\TruongDinhQuan_QuanLyThuVien\\wwwroot\\Image\\NTR.jpg",
+      "PackagePath": "staticwebassets\\Image\\NTR.jpg"
+    },
+    {
+      "Id": "G:\\C#\\thaylong\\TruongDinhQuan_QuanLyThuVien\\TruongDinhQuan_QuanLyThuVien\\TruongDinhQuan_QuanLyThuVien\\wwwroot\\Image\\anhdep.jpg",
+      "PackagePath": "staticwebassets\\Image\\anhdep.jpg"
+    },
+    {
+      "Id": "G:\\C#\\thaylong\\TruongDinhQuan_QuanLyThuVien\\TruongDinhQuan_QuanLyThuVien\\TruongDinhQuan_QuanLyThuVien\\wwwroot\\Image\\anhnen.jpg",
+      "PackagePath": "staticwebassets\\Image\\anhnen.jpg"
+    },
+    {
+      "Id": "G:\\C#\\thaylong\\TruongDinhQuan_QuanLyThuVien\\TruongDinhQuan_QuanLyThuVien\\TruongDinhQuan_QuanLyThuVien\\wwwroot\\Image\\cute.jpg",
+      "PackagePath": "staticwebassets\\Image\\cute.jpg"
+    },
+    {
+      "Id": "G:\\C#\\thaylong\\TruongDinhQuan_QuanLyThuVien\\TruongDinhQuan_QuanLyThuVien\\TruongDinhQuan_QuanLyThuVien\\wwwroot\\Image\\home.jpg",
+      "PackagePath": "staticwebassets\\Image\\home.jpg"
+    },
+    {
+      "Id": "G:\\C#\\thaylong\\TruongDinhQuan_QuanLyThuVien\\TruongDinhQuan_QuanLyThuVien\\TruongDinhQuan_QuanLyThuVien\\wwwroot\\Image\\rrr.jpg",
+      "PackagePath": "staticwebassets\\Image\\rrr.jpg"
+    },
+    {
+      "Id": "G:\\C#\\thaylong\\TruongDinhQuan_QuanLyThuVien\\TruongDinhQuan_QuanLyThuVien\\TruongDinhQuan_QuanLyThuVien\\wwwroot\\Image\\zoro.jpg",
+      "PackagePath": "staticwebassets\\Image\\zoro.jpg"
+    },
+    {
+      "Id": "G:\\C#\\thaylong\\TruongDinhQuan_QuanLyThuVien\\TruongDinhQuan_QuanLyThuVien\\TruongDinhQuan_QuanLyThuVien\\wwwroot\\app.css",
+      "PackagePath": "staticwebassets\\app.css"
+    },
+    {
+      "Id": "G:\\C#\\thaylong\\TruongDinhQuan_QuanLyThuVien\\TruongDinhQuan_QuanLyThuVien\\TruongDinhQuan_QuanLyThuVien\\wwwroot\\beforeunload.js",
+      "PackagePath": "staticwebassets\\beforeunload.js"
+    },
+    {
+      "Id": "G:\\C#\\thaylong\\TruongDinhQuan_QuanLyThuVien\\TruongDinhQuan_QuanLyThuVien\\TruongDinhQuan_QuanLyThuVien\\wwwroot\\bootstrap\\bootstrap.min.css",
+      "PackagePath": "staticwebassets\\bootstrap\\bootstrap.min.css"
+    },
+    {
+      "Id": "G:\\C#\\thaylong\\TruongDinhQuan_QuanLyThuVien\\TruongDinhQuan_QuanLyThuVien\\TruongDinhQuan_QuanLyThuVien\\wwwroot\\bootstrap\\bootstrap.min.css.map",
+      "PackagePath": "staticwebassets\\bootstrap\\bootstrap.min.css.map"
+    },
+    {
+      "Id": "G:\\C#\\thaylong\\TruongDinhQuan_QuanLyThuVien\\TruongDinhQuan_QuanLyThuVien\\TruongDinhQuan_QuanLyThuVien\\wwwroot\\favicon.png",
+      "PackagePath": "staticwebassets\\favicon.png"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.TruongDinhQuan_QuanLyThuVien.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.build.TruongDinhQuan_QuanLyThuVien.props",
+      "PackagePath": "build\\TruongDinhQuan_QuanLyThuVien.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildMultiTargeting.TruongDinhQuan_QuanLyThuVien.props",
+      "PackagePath": "buildMultiTargeting\\TruongDinhQuan_QuanLyThuVien.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildTransitive.TruongDinhQuan_QuanLyThuVien.props",
+      "PackagePath": "buildTransitive\\TruongDinhQuan_QuanLyThuVien.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

@@ -1,0 +1,87 @@
+﻿
+<AuthorizeView>
+    <Authorized>
+        <style>
+            .flex-cmn {
+                background-color: #12738c; /* Màu xám */
+                color: #FFFFFF; /* Màu trắng cho chữ */
+            }
+        </style>
+        <div class="flex-cmn">
+
+            <div class="top-row ps-3 navbar navbar-dark">
+                <div class="container-fluid">
+                    <a class="navbar-brand" href="">QuanLyThuVien</a>
+                </div>
+            </div>
+
+            <input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+            <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+                <nav class="flex-column">
+
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="home" Match="NavLinkMatch.All">
+                            <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Trang chủ
+                        </NavLink>
+                    </div>
+
+                    <AuthorizeView Roles="Member" Context="memberContext">
+                        <Authorized Context="memberLinksContext">
+                            <div class="nav-item px-3">
+                                <NavLink class="nav-link" href="muonsach">
+                                    <MudIcon Icon="@Icons.Material.Filled.MenuBook" Class="me-2" /> <span>Sách</span>
+                                </NavLink>
+                            </div>
+                        </Authorized>
+                    </AuthorizeView>
+
+                    <AuthorizeView Roles="Admin, Member" Context="adminContext">
+                        <Authorized Context="adminLinksContext">
+                            <div class="nav-item px-3">
+                                <NavLink class="nav-link" href="quanlymuonsach">
+                                    <MudIcon Icon="@Icons.Material.Filled.LibraryBooks" Class="me-2" /> <span>Mượn sách</span>
+                                </NavLink>
+                            </div>
+                        </Authorized>
+                    </AuthorizeView>
+
+                     <AuthorizeView Roles="Admin, Member" Context="adminContext">
+                        <Authorized Context="adminLinksContext">
+                            <div class="nav-item px-3">
+                                <NavLink class="nav-link" href="trasach">
+                                    <MudIcon Icon="@Icons.Material.Filled.BookmarkAdded" Class="me-2" /> <span>Trả sách</span>
+                                </NavLink>
+                            </div>
+                        </Authorized>
+                    </AuthorizeView> 
+
+                    <AuthorizeView Roles="Admin" Context="adminContext">
+                        <Authorized Context="adminLinksContext">
+                            <div class="nav-item px-3">
+                                <NavLink class="nav-link" href="quanlybook">
+                                    <MudIcon Icon="@Icons.Material.Filled.MenuBook" Class="me-2" /> <span>Sách</span>
+                                </NavLink>
+                            </div>
+
+                            <div class="nav-item px-3">
+                                <NavLink class="nav-link" href="quanlynguoidung">
+                                    <MudIcon Icon="@Icons.Material.Filled.SupervisedUserCircle" Class="me-2" /> <span>Người dùng</span>
+                                </NavLink>
+                            </div>
+                        </Authorized>
+                    </AuthorizeView>
+
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="logout">
+                            <MudIcon Icon="@Icons.Material.Filled.Logout" Class="me-2" /> <span>Logout</span>
+                        </NavLink>
+                    </div>
+                </nav>
+            </div>
+
+        </div>
+    </Authorized>
+</AuthorizeView>
+
+

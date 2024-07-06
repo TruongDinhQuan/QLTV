@@ -1,0 +1,110 @@
+﻿@page "/UserManagement_TT"
+@page "/UserManagement_TT/{Id:int}"
+
+@inject NavigationManager navigationManager
+@inject IUserService UserService
+ @attribute [Authorize(Roles = "Admin")] 
+@rendermode @(new InteractiveServerRenderMode(prerender: false)) 
+
+<style>
+    .center-text {
+        text-align: center;
+    }
+</style>
+
+@if (Id is null)
+{
+    <PageTitle>Thêm người dùng mới</PageTitle>
+    //add new book form
+    <h1 class="center-text">Form thêm người dùng mới</h1>
+}
+else
+{
+    <PageTitle>Chỉnh sủa thông tin người dùng</PageTitle>
+    <h1 class="center-text">Form chỉnh sửa thông tin người dùng</h1>
+}
+
+@* //add new form // edits form *@
+<div class="add_form">
+    <AuthorizeView Roles="Admin" Context="authContext">
+        <Authorized>
+            <div class="Title_page">User FORM</div>
+            <div class="addbook_form_body">
+                <EditForm OnSubmit="HandleSubmit" Model="@currentuser">
+                    <div class="form-outline mb-4">
+                        <label>Username</label>
+                        <InputText @bind-Value="currentuser.TenDangNhap" type="text" class="form-control" />
+
+                        <label>Password</label>
+                        <InputText @bind-Value="currentuser.MatKhau" type="text" class="form-control" />
+
+                        <label>Full Name</label>
+                        <InputText @bind-Value="currentuser.TenDaydu" type="text" class="form-control" />
+
+                        <label>Email</label>
+                        <InputText @bind-Value="currentuser.Email" @bind-Value:format="dd/MM/yyyy" class="form-control" />
+
+                        <label>Role</label>
+                        <InputSelect @bind-Value="currentuser.VaiTro" class="form-select" aria-label="Default select example">
+                            <option selected>Chọn chức vụ cho người dùng</option>
+                            <option value="Admin">Admin</option>
+                            <option value="Member">Member</option>
+
+                        </InputSelect>
+                    </div>
+                    <div>
+                        <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Save" Color="Color.Info" Size="Size.Small" OnClick="HandleSubmit">Lưu</MudButton>
+                        <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Cancel" Color="Color.Secondary" Size="Size.Small" OnClick="GoBack">Hủy</MudButton>
+                    </div>
+                </EditForm>
+            </div>
+        </Authorized>
+
+    </AuthorizeView>
+
+
+</div>
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+
+    [SupplyParameterFromForm]
+    public NGUOIDUNG currentuser { get; set; } = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Id is not null)
+        {
+            var edituser = await UserService.GetUserByIdAsync((int)Id);
+            if (edituser is not null)
+                currentuser = edituser;
+        }
+    }
+
+
+    //add function
+    async Task HandleSubmit()
+    {
+        if (Id is not null)
+        {
+            //update
+            await UserService.UpdateNewUserAsync(currentuser, (int)Id);
+            navigationManager.NavigateTo("/quanlynguoidung", forceLoad: true);
+        }
+        else
+        {
+            //add
+            currentuser.VaiTro = "Member";
+            await UserService.AddNewUserAsync(currentuser);
+            navigationManager.NavigateTo("/quanlynguoidung", forceLoad: true);
+        }
+    }
+
+    void GoBack()
+    {
+        navigationManager.NavigateTo("/quanlynguoidung");
+    }
+}
+
